@@ -16,19 +16,12 @@ from sklearn.metrics import r2_score
 # ARGUMENTS
 # ============================================================
 def parse_args() -> argparse.Namespace:
-    """
-    Parse command-line arguments.
-
-    Returns
-    -------
-    argparse.Namespace
-        Parsed command-line arguments.
-    """
 
     parser = argparse.ArgumentParser(
         description=(
             "Calculate feature-level R², Pearson correlation, "
-            "p-values, and Benjamini-Hochberg FDR-adjusted q-values."
+            "permutation-based empirical p-values, and "
+            "Benjamini-Hochberg FDR-adjusted q-values."
         )
     )
 
@@ -38,7 +31,7 @@ def parse_args() -> argparse.Namespace:
         default=Path("results/LUAD"),
         help=(
             "Directory containing the predicted and observed morphology "
-            "files. Default: results/"
+            "files. Default: results"
         ),
     )
 
@@ -82,6 +75,26 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
+    parser.add_argument(
+        "--n-permutations",
+        type=int,
+        default=5000,
+        help=(
+            "Number of permutations used to construct the empirical "
+            "R² null distribution. Default: 5000"
+        ),
+    )
+
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help=(
+            "Random seed used for the permutation analysis. "
+            "Default: 42"
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -91,19 +104,6 @@ def parse_args() -> argparse.Namespace:
 def benjamini_hochberg(
     p_values: np.ndarray,
 ) -> np.ndarray:
-    """
-
-    Parameters
-    ----------
-    p_values
-        One-dimensional array of p-values.
-
-    Returns
-    -------
-    numpy.ndarray
-        Array of Benjamini-Hochberg-adjusted q-values in the same
-        order as the input p-values.
-    """
 
     p_values = np.asarray(
         p_values,
@@ -116,7 +116,9 @@ def benjamini_hochberg(
         dtype=float,
     )
 
-    valid = np.isfinite(p_values)
+    valid = np.isfinite(
+        p_values
+    )
 
     if not valid.any():
         return q_values
@@ -124,8 +126,13 @@ def benjamini_hochberg(
     valid_p_values = p_values[valid]
     number_of_tests = valid_p_values.size
 
-    order = np.argsort(valid_p_values)
-    sorted_p_values = valid_p_values[order]
+    order = np.argsort(
+        valid_p_values
+    )
+
+    sorted_p_values = valid_p_values[
+        order
+    ]
 
     ranks = np.arange(
         1,
@@ -139,7 +146,7 @@ def benjamini_hochberg(
         / ranks
     )
 
-    # Enforce the monotonicity required by the BH procedure.
+    # Enforce monotonicity required by the BH procedure.
     sorted_q_values = np.minimum.accumulate(
         sorted_q_values[::-1]
     )[::-1]
@@ -168,13 +175,18 @@ def load_morphology_file(
     sample_id_column: str,
     file_label: str,
 ) -> pd.DataFrame:
+    """
+    Load and validate a morphology CSV file.
+    """
 
     if not path.exists():
         raise FileNotFoundError(
             f"{file_label} file was not found: {path}"
         )
 
-    dataframe = pd.read_csv(path)
+    dataframe = pd.read_csv(
+        path
+    )
 
     if sample_id_column not in dataframe.columns:
         raise ValueError(
@@ -218,31 +230,38 @@ def validate_and_align_files(
     observed: pd.DataFrame,
     predicted: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Validate and align observed and predicted morphology files.
+    """
 
-
-    missing_observed_samples = (
-        predicted.index.difference(
-            observed.index
-        )
+    predicted_only_samples = predicted.index.difference(
+        observed.index
     )
 
-    if len(missing_observed_samples) > 0:
+    if len(predicted_only_samples) > 0:
         raise ValueError(
-            f"{len(missing_observed_samples)} predicted samples are "
+            f"{len(predicted_only_samples)} predicted samples are "
             "missing from the observed morphology file. Examples: "
-            f"{missing_observed_samples[:5].tolist()}"
+            f"{predicted_only_samples[:5].tolist()}"
         )
 
-    predicted_only_features = (
-        predicted.columns.difference(
-            observed.columns
-        )
+    observed_only_samples = observed.index.difference(
+        predicted.index
     )
 
-    observed_only_features = (
-        observed.columns.difference(
-            predicted.columns
+    if len(observed_only_samples) > 0:
+        raise ValueError(
+            f"{len(observed_only_samples)} observed samples are "
+            "missing from the predicted morphology file. Examples: "
+            f"{observed_only_samples[:5].tolist()}"
         )
+
+    predicted_only_features = predicted.columns.difference(
+        observed.columns
+    )
+
+    observed_only_features = observed.columns.difference(
+        predicted.columns
     )
 
     if len(predicted_only_features) > 0:
@@ -259,7 +278,7 @@ def validate_and_align_files(
             f"{observed_only_features[:10].tolist()}"
         )
 
-    # Preserve the exact sample and feature ordering of the prediction file.
+    # Preserve prediction-file sample and feature ordering.
     observed = observed.loc[
         predicted.index,
         predicted.columns,
@@ -284,16 +303,78 @@ def validate_and_align_files(
 
 
 # ============================================================
+# EMPIRICAL R² PERMUTATION TEST
+# ============================================================
+def calculate_permutation_p_value(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    observed_r2: float,
+    n_permutations: int,
+    rng: np.random.Generator,
+) -> float:
+
+    if not np.isfinite(
+        observed_r2
+    ):
+        return np.nan
+
+    number_at_least_as_large = 0
+
+    for _ in range(
+        n_permutations
+    ):
+        permuted_predictions = rng.permutation(
+            y_pred
+        )
+
+        permuted_r2 = r2_score(
+            y_true,
+            permuted_predictions,
+        )
+
+        if permuted_r2 >= observed_r2:
+            number_at_least_as_large += 1
+
+    empirical_p_value = (
+        number_at_least_as_large + 1
+    ) / (
+        n_permutations + 1
+    )
+
+    return float(
+        empirical_p_value
+    )
+
+
+# ============================================================
 # FEATURE-LEVEL METRICS
 # ============================================================
 def calculate_feature_metrics(
     observed: pd.DataFrame,
     predicted: pd.DataFrame,
+    n_permutations: int,
+    seed: int,
 ) -> pd.DataFrame:
+
+    if n_permutations < 1:
+        raise ValueError(
+            "n_permutations must be at least 1."
+        )
+
+    rng = np.random.default_rng(
+        seed
+    )
 
     records: list[dict[str, object]] = []
 
-    for feature in predicted.columns:
+    number_of_features = len(
+        predicted.columns
+    )
+
+    for feature_number, feature in enumerate(
+        predicted.columns,
+        start=1,
+    ):
         y_true = observed[feature].to_numpy(
             dtype=float
         )
@@ -307,8 +388,13 @@ def calculate_feature_metrics(
             & np.isfinite(y_pred)
         )
 
-        y_true = y_true[complete]
-        y_pred = y_pred[complete]
+        y_true = y_true[
+            complete
+        ]
+
+        y_pred = y_pred[
+            complete
+        ]
 
         number_of_samples = int(
             y_true.size
@@ -330,8 +416,9 @@ def calculate_feature_metrics(
             )
         )
 
-        # R² requires at least two observations and nonconstant
-        # observed values.
+        # ----------------------------------------------------
+        # Observed R²
+        # ----------------------------------------------------
         if (
             number_of_samples >= 2
             and not true_is_constant
@@ -345,14 +432,15 @@ def calculate_feature_metrics(
         else:
             r2 = np.nan
 
-        # Pearson correlation requires at least three observations
-        # and variation in both observed and predicted values.
+        # ----------------------------------------------------
+        # Pearson correlation coefficient
+        # ----------------------------------------------------
         if (
             number_of_samples >= 3
             and not true_is_constant
             and not predicted_is_constant
         ):
-            pearson_r, p_value = pearsonr(
+            pearson_r, _ = pearsonr(
                 y_true,
                 y_pred,
             )
@@ -360,12 +448,24 @@ def calculate_feature_metrics(
             pearson_r = float(
                 pearson_r
             )
-
-            p_value = float(
-                p_value
-            )
         else:
             pearson_r = np.nan
+
+        # ----------------------------------------------------
+        # Empirical permutation p-value for observed R²
+        # ----------------------------------------------------
+        if (
+            number_of_samples >= 2
+            and not true_is_constant
+        ):
+            p_value = calculate_permutation_p_value(
+                y_true=y_true,
+                y_pred=y_pred,
+                observed_r2=r2,
+                n_permutations=n_permutations,
+                rng=rng,
+            )
+        else:
             p_value = np.nan
 
         records.append(
@@ -378,10 +478,17 @@ def calculate_feature_metrics(
             }
         )
 
+        print(
+            f"Processed feature {feature_number}/"
+            f"{number_of_features}: {feature}"
+        )
+
     results = pd.DataFrame.from_records(
         records
     )
 
+    # BH correction is applied to the empirical R² permutation
+    # p-values, not to Pearson-correlation p-values.
     results["q"] = benjamini_hochberg(
         results["p"].to_numpy(
             dtype=float
@@ -389,8 +496,14 @@ def calculate_feature_metrics(
     )
 
     results = results.sort_values(
-        by=["r2", "q"],
-        ascending=[False, True],
+        by=[
+            "r2",
+            "q",
+        ],
+        ascending=[
+            False,
+            True,
+        ],
         na_position="last",
     ).reset_index(
         drop=True
@@ -406,18 +519,10 @@ def report_results(
     results: pd.DataFrame,
     output_path: Path,
     number_of_samples: int,
+    n_permutations: int,
 ) -> None:
     """
     Print a concise evaluation summary.
-
-    Parameters
-    ----------
-    results
-        Feature-level evaluation results.
-    output_path
-        Path where the results table was saved.
-    number_of_samples
-        Number of held-out samples evaluated.
     """
 
     valid_r2 = int(
@@ -438,12 +543,19 @@ def report_results(
         ).sum()
     )
 
-    print(
-        f"Saved feature-level metrics to:\n{output_path}"
+    significant_high_r2_features = int(
+        (
+            (results["r2"] > 0.6)
+            & (results["q"] < 0.05)
+        ).sum()
     )
 
     print(
-        f"Held-out samples evaluated: {number_of_samples}"
+        f"\nSaved feature-level metrics to:\n{output_path}"
+    )
+
+    print(
+        f"Samples evaluated: {number_of_samples}"
     )
 
     print(
@@ -460,8 +572,17 @@ def report_results(
     )
 
     print(
-        "Features with Pearson q < 0.05: "
+        f"Permutations per feature: {n_permutations}"
+    )
+
+    print(
+        "Features with permutation-based q < 0.05: "
         f"{significant_features}"
+    )
+
+    print(
+        "Features with R² > 0.6 and permutation-based q < 0.05: "
+        f"{significant_high_r2_features}"
     )
 
     print(
@@ -521,16 +642,16 @@ def main() -> None:
         file_label="Predicted morphology",
     )
 
-    observed, predicted = (
-        validate_and_align_files(
-            observed=observed,
-            predicted=predicted,
-        )
+    observed, predicted = validate_and_align_files(
+        observed=observed,
+        predicted=predicted,
     )
 
     results = calculate_feature_metrics(
         observed=observed,
         predicted=predicted,
+        n_permutations=args.n_permutations,
+        seed=args.seed,
     )
 
     results.to_csv(
@@ -542,6 +663,7 @@ def main() -> None:
         results=results,
         output_path=results_path,
         number_of_samples=len(predicted),
+        n_permutations=args.n_permutations,
     )
 
 
