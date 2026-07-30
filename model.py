@@ -54,8 +54,6 @@ class Autoencoder(nn.Module):
 
 
 class LatentDiscriminator(nn.Module):
-    """Classify RNA latent vectors as 0 and morphology latent vectors as 1."""
-
     def __init__(
         self,
         latent_dim: int,
