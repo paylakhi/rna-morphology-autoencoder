@@ -231,12 +231,6 @@ def get_features_to_test(Y_all: pd.DataFrame) -> list[str]:
 
 
 def choose_k_values(n_total_genes: int) -> list[int]:
-    """
-    Return the gene-set sizes evaluated in the incremental-R² analysis.
-
-    The sequence includes the small-k values requested for the sparsity check,
-    plus intermediate larger panels to provide resolution near the 90% crossing.
-    """
 
     candidate_k_values = [
         1,
@@ -270,11 +264,6 @@ def rank_genes_by_training_correlation(
     X_train: pd.DataFrame,
     y_train: pd.Series,
 ) -> pd.DataFrame:
-    """
-    Rank genes by absolute Pearson correlation using one training fold only.
-
-    Held-out samples are never used for ranking.
-    """
 
     y_numeric = pd.to_numeric(
         y_train,
@@ -692,11 +681,6 @@ def interpolate_k90(
     feature_curve: pd.DataFrame,
     target_fraction: float,
 ) -> float:
-    """
-    Estimate the k value where relative performance first crosses the target.
-
-    Linear interpolation is performed only between directly evaluated k values.
-    """
 
     curve = (
         feature_curve[
@@ -869,15 +853,6 @@ def calculate_k90_summary(
 # ============================================================================
 
 def format_feature_label(feature_name: str) -> str:
-    """
-    Add a line break after the first two underscore-separated components.
-
-    Example:
-        Cells_AreaShape_Zernike_4_2
-        ->
-        Cells_AreaShape
-        Zernike_4_2
-    """
 
     parts = str(feature_name).split("_")
 
@@ -898,19 +873,8 @@ def create_two_panel_figure(
     target_fraction: float,
     output_dir: Path,
 ) -> None:
-    """
-    Create the final two-panel supplementary figure.
 
-    Panel A:
-        Relative held-out Ridge performance across increasing fractions
-        of the ranked gene panel.
-
-    Panel B:
-        Percentage of the gene panel required to reach 90% of full-model
-        held-out Ridge performance.
-    """
-
-    # Gene-set sizes displayed in the manuscript figure.
+ 
     desired_plot_k = [
         2,
         10,
@@ -942,7 +906,6 @@ def create_two_panel_figure(
             "for the final figure."
         )
 
-    # Manuscript display labels for the 187-gene analysis.
     if n_total_genes == 187:
         label_lookup = {
             2: "1%",
