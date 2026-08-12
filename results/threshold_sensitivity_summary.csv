@@ -1,0 +1,5 @@
+R² threshold,Features retained,Morphology categories,Median population R²,Median individual R²,Dominant morphology categories
+0.50,29,10,0.685,0.630,AreaShape; AGP-RadialDistribution; Mito-RadialDistribution
+0.60,17,5,0.719,0.700,AGP-RadialDistribution; AreaShape; Mito-RadialDistribution
+0.70,5,3,0.774,0.850,AreaShape; Mito-RadialDistribution; AGP-RadialDistribution
+0.80,1,1,0.820,0.820,Mito-RadialDistribution
