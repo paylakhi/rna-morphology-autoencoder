@@ -1,0 +1,15 @@
+Morphology feature	Gene	SNP	eQTL effect (β)	eQTL SE	eQTL p-value	eQTL q-value	TWAS effect (β)	TWAS SE	TWAS p-value	TWAS q-value
+Cells_AreaShape_Zernike_3_1	NVL	chr1:223775505:CG:C	0.629	0.15	6.10e-05	4.61e-01	0.19	0.091	3.86e-02	4.80e-02
+Cells_RadialDistribution_RadialCV_AGP_4of4	SLC11A2	chr12:51041482:TA:T	-0.156	0.03	1.12e-06	1.33e-02	-0.188	0.085	2.85e-02	3.90e-02
+Cells_RadialDistribution_RadialCV_AGP_4of4	VDAC1	chr5:134021557:T:TA	-0.742	0.187	1.36e-04	8.86e-01	0.176	0.084	3.79e-02	4.60e-02
+Cytoplasm_AreaShape_Zernike_4_4	MNAT1	chr14:61304354:G:A	-0.22	0.062	5.49e-04	1.00e+00	0.277	0.099	6.34e-03	4.20e-02
+Cytoplasm_AreaShape_Zernike_4_4	PDHX	chr11:34910482:G:A	-0.245	0.029	2.75e-13	1.55e-08	0.207	0.101	4.24e-02	4.76e-02
+Cytoplasm_AreaShape_Zernike_9_9	EIF4EBP1	chr8:37872850:G:A	0.914	0.284	1.73e-03	1.00e+00	-0.272	0.118	2.35e-02	4.12e-02
+Cytoplasm_RadialDistribution_RadialCV_AGP_1of4	TRAP1	chr16:3666365:CA:C	-0.368	0.1	3.63e-04	1.00e+00	0.287	0.114	1.32e-02	4.30e-02
+Nuclei_Granularity_5_DNA	HMGA2	chr12:65990422:C:A	-1.355	0.367	3.59e-04	1.00e+00	0.216	0.09	1.84e-02	4.63e-02
+Nuclei_Granularity_5_DNA	MYC	chr8:127881463:TA:T	0.521	0.118	2.49e-05	2.85e-01	-0.183	0.09	4.60e-02	4.74e-02
+Nuclei_RadialDistribution_FracAtD_Mito_3of4	ECD	chr10:73087686:T:C	0.102	0.032	1.80e-03	1.00e+00	0.308	0.108	5.42e-03	3.77e-02
+Nuclei_RadialDistribution_FracAtD_Mito_3of4	MAPKAPK5	chr12:112391662:C:CT	-0.271	0.043	7.75e-09	1.02e-04	-0.215	0.108	4.92e-02	4.54e-02
+Nuclei_RadialDistribution_MeanFrac_Mito_3of4	PDHX	chr11:34910482:G:A	-0.245	0.029	2.75e-13	1.55e-08	0.227	0.103	3.06e-02	4.19e-02
+Nuclei_RadialDistribution_RadialCV_DNA_1of4	EIF4EBP1	chr8:37872850:G:A	0.914	0.284	1.73e-03	1.00e+00	0.268	0.12	2.76e-02	4.27e-02
+Nuclei_RadialDistribution_RadialCV_DNA_1of4	GTF2E2	chr8:29911436:G:A	-0.219	0.047	9.64e-06	1.10e-01	0.262	0.12	3.10e-02	4.77e-02
