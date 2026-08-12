@@ -80,6 +80,17 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--morphology-input-space",
+        choices=["raw", "luad_scaled"],
+        default="raw",
+        help=(
+            "Use 'raw' for donor morphology in its original feature units; "
+            "the saved LUAD training-set morphology scaler will then be applied "
+            "before R² evaluation. Use 'luad_scaled' only if the donor morphology "
+            "file has already been transformed with that exact saved LUAD scaler."
+        ),
+    )
+    parser.add_argument(
         "--device",
         choices=["cpu", "cuda"],
         default="cpu",
@@ -317,7 +328,25 @@ def preprocess_donor_rna(
 def prepare_shared_donor_morphology(
     donor_morphology: pd.DataFrame,
     trained_morphology_names: list[str],
+    morphology_preprocessing: dict,
+    input_space: str,
 ) -> tuple[np.ndarray, list[str], np.ndarray]:
+
+
+    required_keys = {"scaler", "feature_names"}
+    missing_keys = required_keys - set(morphology_preprocessing)
+    if missing_keys:
+        raise KeyError(
+            "Saved morphology preprocessing is missing keys: "
+            f"{sorted(missing_keys)}"
+        )
+
+    saved_feature_names = list(morphology_preprocessing["feature_names"])
+    if saved_feature_names != trained_morphology_names:
+        raise ValueError(
+            "Saved morphology feature names do not match the morphology order "
+            "stored for the trained LUAD model."
+        )
 
     shared_features = [
         feature
@@ -351,6 +380,39 @@ def prepare_shared_donor_morphology(
         )
 
     observed_array = observed.to_numpy(dtype=float)
+
+    if input_space == "raw":
+        scaler = morphology_preprocessing["scaler"]
+
+        if not hasattr(scaler, "mean_") or not hasattr(scaler, "scale_"):
+            raise TypeError(
+                "Saved morphology scaler does not contain fitted mean_/scale_."
+            )
+
+        scaler_mean = np.asarray(scaler.mean_, dtype=float)
+        scaler_scale = np.asarray(scaler.scale_, dtype=float)
+
+        if (
+            scaler_mean.shape[0] != len(trained_morphology_names)
+            or scaler_scale.shape[0] != len(trained_morphology_names)
+        ):
+            raise ValueError(
+                "Saved LUAD morphology scaler dimension does not match the "
+                "trained morphology feature list."
+            )
+
+        shared_mean = scaler_mean[trained_feature_indices]
+        shared_scale = scaler_scale[trained_feature_indices]
+        safe_scale = np.where(shared_scale == 0.0, 1.0, shared_scale)
+
+        observed_array = (
+            observed_array - shared_mean
+        ) / safe_scale
+
+    elif input_space != "luad_scaled":
+        raise ValueError(
+            "input_space must be either 'raw' or 'luad_scaled'."
+        )
 
     return (
         observed_array.astype(np.float32),
@@ -557,6 +619,129 @@ def permutation_p_values(
 
 
 # ============================================================
+# THRESHOLD-SENSITIVITY SUMMARY
+# ============================================================
+
+
+def morphology_category(feature_name: str) -> str:
+
+    feature = str(feature_name)
+
+    measurement_families = (
+        "AreaShape",
+        "RadialDistribution",
+        "Texture",
+        "Granularity",
+        "Intensity",
+        "Neighbors",
+        "Correlation",
+        "Location",
+    )
+
+    measurement = next(
+        (
+            family
+            for family in measurement_families
+            if f"_{family}_" in feature
+        ),
+        None,
+    )
+
+    channels = ("AGP", "Mito", "ER", "DNA", "RNA")
+    channel = next(
+        (
+            channel_name
+            for channel_name in channels
+            if f"_{channel_name}_" in feature
+        ),
+        None,
+    )
+
+    if measurement is None:
+
+        parts = feature.split("_")
+        measurement = parts[1] if len(parts) > 1 else feature
+
+    # Preserve the channel for image-intensity/organization measurements.
+    if channel is not None and measurement in {
+        "RadialDistribution",
+        "Texture",
+        "Granularity",
+        "Intensity",
+    }:
+        return f"{channel}-{measurement}"
+
+    return measurement
+
+
+def make_threshold_sensitivity_summary(
+    results: pd.DataFrame,
+    thresholds: tuple[float, ...] = (0.5, 0.6, 0.7, 0.8),
+    fdr_threshold: float = FDR_THRESHOLD,
+) -> pd.DataFrame:
+
+    records: list[dict[str, object]] = []
+
+    for threshold in thresholds:
+        retained = results.loc[
+            (results["global_r2"] > threshold)
+            & (results["indiv_mean_r2"] > threshold)
+            & (results["global_q"] < fdr_threshold)
+        ].copy()
+
+        if retained.empty:
+            records.append(
+                {
+                    "R² threshold": threshold,
+                    "Features retained": 0,
+                    "Morphology categories": 0,
+                    "Median population R²": np.nan,
+                    "Median individual R²": np.nan,
+                    "Dominant morphology categories": "",
+                }
+            )
+            continue
+
+        retained["morphology_category"] = retained["feature"].map(
+            morphology_category
+        )
+
+        category_counts = (
+            retained["morphology_category"]
+            .value_counts()
+            .rename_axis("category")
+            .reset_index(name="count")
+            .sort_values(
+                by=["count", "category"],
+                ascending=[False, True],
+            )
+        )
+
+        dominant_categories = "; ".join(
+            category_counts["category"].head(3).tolist()
+        )
+
+        records.append(
+            {
+                "R² threshold": threshold,
+                "Features retained": int(len(retained)),
+                "Morphology categories": int(
+                    retained["morphology_category"].nunique()
+                ),
+                "Median population R²": float(
+                    retained["global_r2"].median()
+                ),
+                "Median individual R²": float(
+                    retained["indiv_mean_r2"].median()
+                ),
+                "Dominant morphology categories": dominant_categories,
+            }
+        )
+
+    return pd.DataFrame.from_records(records)
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -624,6 +809,8 @@ def main() -> None:
     ) = prepare_shared_donor_morphology(
         donor_morphology=donor_morphology,
         trained_morphology_names=trained_morphology_names,
+        morphology_preprocessing=preprocessing["morphology"],
+        input_space=args.morphology_input_space,
     )
 
     # --------------------------------------------------------
@@ -738,7 +925,20 @@ def main() -> None:
     )
 
     # --------------------------------------------------------
-    # 10. Console summary only; no additional output files.
+    # 10. R²-threshold sensitivity analysis.
+    # --------------------------------------------------------
+    sensitivity_summary = make_threshold_sensitivity_summary(
+        results=results,
+        thresholds=(0.5, 0.6, 0.7, 0.8),
+        fdr_threshold=args.fdr_threshold,
+    )
+    sensitivity_summary.to_csv(
+        args.output_dir / "Table_S_threshold_sensitivity_summary.csv",
+        index=False,
+    )
+
+    # --------------------------------------------------------
+    # 11. Console summary only.
     # --------------------------------------------------------
     selected = results[results["highlight"]]
 
@@ -753,6 +953,10 @@ def main() -> None:
     print("Model retraining or donor-specific fitting: NO")
     print("Predictions regenerated during bootstrap: NO")
     print(
+        "Observed donor morphology evaluation space: "
+        f"{'LUAD training-set standardized via saved scaler' if args.morphology_input_space == 'raw' else 'already LUAD-standardized input'}"
+    )
+    print(
         "NOTE: indiv_mean_r2 is the MEAN feature-wise R² across "
         "bootstrap resamples of individual donors."
     )
@@ -764,6 +968,7 @@ def main() -> None:
     print("\nSaved outputs:")
     print(args.output_dir / "global_predicted.csv")
     print(args.output_dir / "global_individual_r2_with_pq.csv")
+    print(args.output_dir / "Table_S_threshold_sensitivity_summary.csv")
 
 
 if __name__ == "__main__":
