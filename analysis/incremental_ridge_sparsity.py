@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 # ============================================================================
-# MANUSCRIPT FEATURES
+# FEATURES
 # ============================================================================
 
 OUR_17_FEATURES = [
@@ -335,12 +335,6 @@ def build_ridge_search(
     inner_folds_max: int,
     seed: int,
 ) -> GridSearchCV:
-    """
-    Build a median-imputation + standardization + Ridge pipeline.
-
-    Preprocessing and Ridge-alpha selection are fitted only on the current
-    outer training fold.
-    """
 
     inner_folds = min(
         inner_folds_max,
@@ -432,8 +426,6 @@ def run_incremental_ridge(
             errors="coerce",
         )
 
-        # Keep rows with a finite morphology target and at least one finite
-        # RNA predictor.
         finite_rna = np.isfinite(
             X_all.to_numpy(dtype=float)
         ).any(axis=1)
@@ -659,7 +651,6 @@ def summarize_curves(
         * curve_summary_df["full_model_mean_r2"]
     )
 
-    # Display-only clipping; original relative values remain unchanged.
     curve_summary_df["relative_to_full_r2_display"] = (
         curve_summary_df["relative_to_full_r2"]
         .clip(lower=0, upper=1.05)
@@ -681,6 +672,7 @@ def interpolate_k90(
     feature_curve: pd.DataFrame,
     target_fraction: float,
 ) -> float:
+
 
     curve = (
         feature_curve[
@@ -874,29 +866,36 @@ def create_two_panel_figure(
     output_dir: Path,
 ) -> None:
 
- 
-    desired_plot_k = [
-        2,
-        10,
-        50,
-        100,
-        150,
-        n_total_genes,
-    ]
 
-    selected_k_values = [
-        k
-        for k in desired_plot_k
-        if k <= n_total_genes
-        and k in set(curve_summary_df["k_genes"].unique())
-    ]
+    desired_plot_percentages = [1, 5, 25, 50, 75, 100]
 
-    # Guarantee inclusion of the full-gene model.
+    available_k_values = sorted(
+        set(curve_summary_df["k_genes"].unique())
+    )
+    selected_k_values = []
+    label_lookup = {}
+
+    for target_percentage in desired_plot_percentages:
+        if target_percentage == 100:
+            selected_k = n_total_genes
+        else:
+            selected_k = min(
+                available_k_values,
+                key=lambda k: abs(
+                    (100.0 * k / n_total_genes) - target_percentage
+                ),
+            )
+
+        if selected_k in available_k_values:
+            if selected_k not in selected_k_values:
+                selected_k_values.append(selected_k)
+            label_lookup[selected_k] = f"{target_percentage}%"
     if (
-        n_total_genes in set(curve_summary_df["k_genes"].unique())
+        n_total_genes in available_k_values
         and n_total_genes not in selected_k_values
     ):
         selected_k_values.append(n_total_genes)
+        label_lookup[n_total_genes] = "100%"
 
     selected_k_values = list(dict.fromkeys(selected_k_values))
 
@@ -905,22 +904,6 @@ def create_two_panel_figure(
             "Too few directly tested gene-set sizes are available "
             "for the final figure."
         )
-
-    if n_total_genes == 187:
-        label_lookup = {
-            2: "1%",
-            10: "5%",
-            50: "25%",
-            100: "50%",
-            150: "75%",
-            187: "100%",
-        }
-    else:
-        # For a different panel size, display rounded actual percentages.
-        label_lookup = {
-            k: f"{int(round(100 * k / n_total_genes))}%"
-            for k in selected_k_values
-        }
 
     positive_full_features = (
         k90_summary_df.loc[
@@ -1274,7 +1257,6 @@ def create_two_panel_figure(
             spine.set_color("black")
             spine.set_linewidth(1.5)
 
-    # Force identical plotting-box dimensions.
     ax_curve.set_box_aspect(1)
     ax_k90.set_box_aspect(1)
 
@@ -1300,15 +1282,6 @@ def create_two_panel_figure(
     plt.show()
     plt.close(fig)
 
-    # Save exactly the data displayed in the two panels.
-    relative_median_curve.to_csv(
-        output_dir / "figure_panel_a_relative_summary.csv",
-        index=False,
-    )
-    plot_k90_df.to_csv(
-        output_dir / "figure_panel_b_k90_percentages.csv",
-        index=False,
-    )
 
 
 # ============================================================================
