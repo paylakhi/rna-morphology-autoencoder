@@ -1,0 +1,21 @@
+﻿model,morphology_feature,category,gene,rank,mean_permutation_importance,sd_permutation_importance,positive_importance_folds,pearson_r,pearson_p,spearman_rho,spearman_p
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,212694_s_at,1,0.013795991,0.012232521,4,0.108803551,0.042516708,0.041612983,0.439035827
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,215980_s_at,2,0.010764878,0.004973979,5,0.133761333,0.012505813,0.037709284,0.483193164
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,200886_s_at,3,0.00800835,0.009917609,4,0.119359405,0.025975685,0.086522825,0.107119131
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,212047_s_at,4,0.007522037,0.003762081,5,0.153337296,0.004141828,0.105696082,0.048819739
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,212717_at,5,0.007437201,0.005913433,4,0.199560288,0.000178881,0.199333695,0.000182002
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,218215_s_at,6,0.007049825,0.00541334,4,0.156482408,0.003425913,0.093417632,0.08182029
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,201379_s_at,7,0.006740373,0.007332829,5,0.007203262,0.893486891,0.120611177,0.024442777
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,202388_at,8,0.005915557,0.00659161,4,0.142210177,0.007887035,0.119985908,0.025198431
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,204579_at,9,0.005460956,0.004707177,4,0.196680009,0.000222549,0.171185611,0.001347667
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,212795_at,10,0.005216495,0.005136274,4,0.139734251,0.009050317,0.097594603,0.069003567
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,202689_at,11,0.005159287,0.005747206,4,0.093502963,0.081540438,0.136129566,0.011016597
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,219222_at,12,0.004709834,0.004997229,4,0.242860275,4.58E-06,0.275120571,1.84E-07
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,201697_s_at,13,0.004142656,0.006682889,4,0.160094307,0.002743398,0.188734854,0.000400125
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,205750_at,14,0.00381812,0.002826862,5,0.086097038,0.108864213,0.049236649,0.359798746
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,203408_s_at,15,0.003789029,0.003657389,4,0.053676562,0.318065777,0.039904136,0.458075634
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,202705_at,16,0.003718002,0.003046894,5,0.044651485,0.406323995,0.128059288,0.01684063
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,212300_at,17,0.003684708,0.002887027,5,0.048567412,0.366373735,0.003890952,0.942344154
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,208898_at,18,0.003666564,0.005711328,4,0.031170629,0.562232103,0.014544657,0.786879343
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,205120_s_at,19,0.003630632,0.005521389,4,0.068973606,0.199286967,0.017596268,0.743593441
+MLPRegressor,Cells_RadialDistribution_RadialCV_AGP_1of4,AGP RadialDistribution,212206_s_at,20,0.003540951,0.001481435,5,0.066558542,0.215515891,0.05873768,0.274508608
