@@ -903,6 +903,8 @@ def main() -> None:
             "feature": shared_morphology_names,
             "indiv_mean_r2": indiv_mean_r2,
             "global_r2": global_r2,
+            "indiv_r2_ci95_low": indiv_ci_lower,
+            "indiv_r2_ci95_high": indiv_ci_upper,
             "global_p": global_p,
             "global_q": global_q,
         }
