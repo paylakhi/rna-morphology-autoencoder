@@ -193,3 +193,15 @@ Analyses were performed using Python 3.11 with:
 - PyTorch 2.3
 - Matplotlib 3.9
 
+---
+
+# Version corresponding to the manuscript
+
+The code, analysis configurations, and shareable derived outputs corresponding to the manuscript are archived as:
+
+**Release:** `v1.0.0`  
+**Commit:** `e2e8cf0`
+
+Repository: https://github.com/paylakhi/rna-morphology-autoencoder
+
+This version corresponds to the code and shareable analysis outputs used for the manuscript.
