@@ -138,6 +138,50 @@ The public repository instead preserves the code, analysis configuration, and sh
 
 ---
 
+# Reproducibility and final analysis outputs
+
+The repository preserves the analysis code, executed run configurations,
+and shareable derived outputs corresponding to the analyses reported in
+the manuscript.
+
+## eQTL-restricted measured expression–morphology association analysis
+
+The final association analysis is implemented in:
+
+`association_scan_cmTWAS/run_cmTWAS_eqtl_restricted.py`
+
+The executed final run configuration is preserved in:
+
+`association_scan_cmTWAS/run_final_association_scan.sh`
+
+The final analysis used an eQTL inclusion threshold of P ≤ 0.05,
+a minimum sample size of 30, and no additional numeric or categorical
+covariates.
+
+The complete association-scan output across all 17 morphology features,
+including both significant and nonsignificant tested associations, is
+provided in the `results/` directory.
+
+## Donor-transfer analysis
+
+The final donor-transfer analysis code is provided in the `analysis/`
+directory. The analysis applies the fixed LUAD-trained model to the
+matched donor cohort without retraining and uses 5,000 bootstrap
+resamples and 5,000 donor-label permutations.
+
+Shareable derived donor-transfer results used to generate the final
+manuscript statistics and supplementary tables are provided in the
+`results/` directory.
+
+## Final manuscript outputs
+
+The `results/` directory contains the shareable derived outputs used
+for the final manuscript analyses and supplementary tables. These
+outputs correspond to the final analysis code and configurations
+included in this repository.
+
+---
+
 # Code and software
 
 Analyses were performed using Python 3.11 with:
