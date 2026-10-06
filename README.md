@@ -35,7 +35,7 @@ DOI: https://doi.org/10.1038/s41592-022-01667-0
 
 The preprocessed matched L1000 gene-expression and Cell Painting profiles are publicly available through the Registry of Open Data on AWS / Cell Painting Gallery.
 
-**Cell Painting Gallery dataset:** `cpg0003-rosetta`
+**Cell Painting Gallery dataset:**
 
 Registry of Open Data on AWS:  
 https://registry.opendata.aws/cellpainting-gallery/
@@ -70,7 +70,7 @@ DOI: https://doi.org/10.1038/s41467-023-44045-w
 
 Raw Cell Painting images from this study are publicly available through the Cell Painting Gallery.
 
-**Cell Painting Gallery dataset:** `cpg0022-cmqtl`
+**Cell Painting Gallery dataset:**
 
 Registry of Open Data on AWS:  
 https://registry.opendata.aws/cellpainting-gallery/
@@ -81,7 +81,7 @@ https://github.com/broadinstitute/cmQTL
 
 Whole-genome sequencing data associated with this donor resource were deposited in NCBI dbGaP under accession:
 
-**dbGaP:** `phs002032.v1.p1`
+**dbGaP:**
 
 Study page:  
 https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs002032.v1.p1
@@ -102,7 +102,7 @@ DOI: https://doi.org/10.1016/j.stem.2023.01.010
 
 The Wells et al. study describes access to sequencing and genomic data from relevant hiPSC resources through AnVIL/dbGaP, including accession:
 
-**dbGaP:** `phs002032`
+**dbGaP:**
 
 AnVIL study/access information:  
 https://anvilproject.org/data/studies/phs002032
